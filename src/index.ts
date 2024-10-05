@@ -10,7 +10,7 @@ const cors = require("cors")
 dotenv.config();
 
 const app: Express = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN;
 const MONGO_URI = process.env.MONGO_URI;
 const MONGO_DB_NAME = process.env.MONGO_DB_NAME
@@ -44,13 +44,13 @@ let db: Db;
 async function connectToMongo() {
   try {
     if (!MONGO_URI) {
-      console.error("No Mongo Port specified.  Please double check")
+      console.error("No Mongo Port specified.  Please double check env variables")
       process.exit(1)
     }
     client = new MongoClient(MONGO_URI);
     await client.connect();
     db = client.db(MONGO_DB_NAME);
-    console.log('Connection to MongoDB sucessful.');
+    console.log('💪💪 Connection to MongoDB successful');
   } catch (error) {
     console.error('Error connecting to MongoDB:', error);
     process.exit(1);
