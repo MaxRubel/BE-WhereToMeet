@@ -19,10 +19,10 @@ userRouter.post("/", async (req: Request, res: Response) => {
 
 //  Checks if user is in the database
 userRouter.post("/exists", async (req: Request, res: Response) => {
-  const userId = req.body.userId;
-  console.log("checking user: ", userId);
+  const uid = req.body.uid;
+  console.log("CHECK USER: ", uid);
   try {
-    const user = await db.collection("users").findOne({ userId });
+    const user = await db.collection("users").findOne({ uid });
     if (user) {
       res.status(200).json({ userExists: true, user });
     } else {
@@ -57,12 +57,12 @@ userRouter.put("/:id", async (req: Request, res: Response) => {
 });
 
 //  Deletes a User by the google auth userId
-userRouter.delete("/:userId", async (req: Request, res: Response) => {
+userRouter.delete("/:uid", async (req: Request, res: Response) => {
   try {
-    const userId = req.params.userId;
-    await db.collection("users").deleteOne({ userId });
+    const uid = req.params.uid;
+    await db.collection("users").deleteOne({ uid });
     res.status(204).json({ message: "success" });
-    console.log(`DELETE: Delete User ${userId}`);
+    console.log(`DELETE: Delete User ${uid}`);
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ message: err.message });
