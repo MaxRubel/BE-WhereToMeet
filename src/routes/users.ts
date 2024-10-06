@@ -1,7 +1,6 @@
 import express from "express";
 import { Request, Response } from "express";
 import { db } from "../index";
-import { User } from "../../dataTypes";
 import { ObjectId } from "mongodb";
 
 const userRouter = express.Router();
@@ -9,6 +8,7 @@ const userRouter = express.Router();
 //  Creates a new user to the DB
 userRouter.post("/", async (req: Request, res: Response) => {
   try {
+    delete req.body._id;
     const result = await db.collection("users").insertOne(req.body);
     res.status(200).json({ _id: result.insertedId, ...req.body });
     console.log("POST: Create User");
@@ -64,12 +64,12 @@ userRouter.put("/:id", async (req: Request, res: Response) => {
 });
 
 //  Deletes a User by the google auth userId
-userRouter.delete("/:uid", async (req: Request, res: Response) => {
+userRouter.delete("/:id", async (req: Request, res: Response) => {
   try {
-    const uid = req.params.uid;
-    await db.collection("users").deleteOne({ uid });
+    const id = req.params.id;
+    await db.collection("users").deleteOne({ _id: new ObjectId(id) });
     res.status(204).json({ message: "success" });
-    console.log(`DELETE: Delete User ${uid}`);
+    console.log(`DELETE: Delete User ${id}`);
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ message: err.message });
