@@ -2,6 +2,7 @@ import express from "express";
 import { Request, Response } from "express";
 import { db } from "../index";
 import { User } from "../../dataTypes";
+import { ObjectId } from "mongodb";
 
 const userRouter = express.Router();
 
@@ -47,8 +48,14 @@ userRouter.get("/", async (req: Request, res: Response) => {
 });
 
 userRouter.put("/:id", async (req: Request, res: Response) => {
+  const id = req.params.id as string
+  const updates = req.body
   try {
-    //do update shit
+    await db.collection("users").updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updates }
+    );
+    console.log(`PUT: Updating User ${id}`)
     res.status(200).json({ message: "success" });
   } catch (err: any) {
     console.error(err);
