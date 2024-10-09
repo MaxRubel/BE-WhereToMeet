@@ -8,7 +8,7 @@ const userRouter = express.Router();
 //  Creates a new user to the DB
 userRouter.post("/", async (req: Request, res: Response) => {
   try {
-    delete req.body._id;
+    delete req.body._id; //<-- delete the id
     const result = await db.collection("users").insertOne(req.body);
     res.status(200).json({ _id: result.insertedId, ...req.body });
     console.log("POST: Create User");
@@ -18,9 +18,10 @@ userRouter.post("/", async (req: Request, res: Response) => {
   }
 });
 
-//  Checks if user is in the database
+// Check if user exists
 userRouter.post("/exists", async (req: Request, res: Response) => {
   const uid = req.body.uid;
+
   console.log("CHECK USER: ", uid);
   try {
     const user = await db.collection("users").findOne({ uid });
@@ -47,15 +48,16 @@ userRouter.get("/", async (req: Request, res: Response) => {
   }
 });
 
+// Edit User
 userRouter.put("/:id", async (req: Request, res: Response) => {
-  const id = req.params.id as string
-  const updates = req.body
+  const id = req.params.id as string;
+  const updates = req.body;
+  console.log(req.body);
   try {
-    await db.collection("users").updateOne(
-      { _id: new ObjectId(id) },
-      { $set: updates }
-    );
-    console.log(`PUT: Updating User ${id}`)
+    await db
+      .collection("users")
+      .updateOne({ _id: new ObjectId(id) }, { $set: updates });
+    console.log(`PUT: Updating User ${id}`);
     res.status(200).json({ message: "success" });
   } catch (err: any) {
     console.error(err);

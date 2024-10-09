@@ -1,6 +1,6 @@
 // -----main types-----
 export type User = {
-  userId: string; //primary key
+  _id: string; //primary key
   name: string;
   phone: number;
   email: string;
@@ -18,7 +18,7 @@ export type User = {
 };
 
 export type Group = {
-  groupId: string; //primary key
+  _id: string; //primary key
   ownerId: string; //foreign key
   name: string;
   description: string;
@@ -26,7 +26,7 @@ export type Group = {
 };
 
 export type Event = {
-  eventId: string; //primary key
+  _id: string; //primary key
   ownerId: string; //foreign key
   groupId: string; //foreign key
 
