@@ -46,6 +46,12 @@ let client: MongoClient;
 let db: Db;
 
 async function connectToMongo() {
+
+  const timeout = setTimeout(() => {
+    console.error("Error Connecting to MongoDB.  Make sure mongo server is running...  try running 'sudo systemctl start mongod' on Mac/linux or 'mongod'  on Windows")
+    process.exit(1);
+  }, 3000)
+
   try {
     if (!MONGO_URI) {
       console.error(
@@ -56,6 +62,7 @@ async function connectToMongo() {
     client = new MongoClient(MONGO_URI);
     await client.connect();
     db = client.db(MONGO_DB_NAME);
+    clearTimeout(timeout)
     console.log("💪💪 Connection to MongoDB successful");
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
