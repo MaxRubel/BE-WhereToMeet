@@ -4,6 +4,7 @@ import { ObjectId } from "mongodb";
 
 const groupsRouter = express.Router();
 
+// GET all groups (TEST FUNCTION
 groupsRouter.get("/", async (req: any, res: any) => {
   try {
     res.status(200).json({ message: "success from groups" });
@@ -12,6 +13,19 @@ groupsRouter.get("/", async (req: any, res: any) => {
   }
 });
 
+//GET Single Group
+groupsRouter.get("/:id", async (req: any, res: any) => {
+  const id = req.params.id
+  console.log("GET: Single Group: ", id)
+  try {
+    const result = await db.collection("groups").findOne({ _id: new ObjectId(id) })
+    res.status(200).json(result);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// CREATE Group
 groupsRouter.post("/", async (req: Request, res: Response) => {
   try {
     await db.collection("groups").insertOne(req.body);
@@ -26,6 +40,7 @@ groupsRouter.post("/", async (req: Request, res: Response) => {
   }
 });
 
+// UPDATE Group
 groupsRouter.put("/:id", async (req: Request, res: Response) => {
   delete req.body._id;
 
@@ -56,6 +71,7 @@ groupsRouter.put("/:id", async (req: Request, res: Response) => {
   }
 });
 
+// DELETE Group
 groupsRouter.delete("/:id", async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
@@ -68,7 +84,9 @@ groupsRouter.delete("/:id", async (req: Request, res: Response) => {
   }
 });
 
+
 //@ts-ignore
+// ADD Member
 groupsRouter.post("/add-member", async (req: Request, res: Response) => {
   try {
     const { groupId, memberId } = req.body;
@@ -112,49 +130,7 @@ groupsRouter.post("/add-member", async (req: Request, res: Response) => {
 });
 
 //@ts-ignore
-groupsRouter.post("/add-member", async (req: Request, res: Response) => {
-  try {
-    const { groupId, memberId } = req.body;
-    console.log(req.body);
-
-    if (!groupId || !memberId) {
-      return res
-        .status(400)
-        .json({ message: "groupId and memberId are required" });
-    }
-
-    const filter = { _id: new ObjectId(groupId) };
-    const updateDoc = {
-      $push: {
-        members: {
-          _id: memberId,
-          joined: new Date(),
-        },
-      },
-    };
-
-    //@ts-ignore
-    const result = await db.collection("groups").updateOne(filter, updateDoc);
-
-    if (result.matchedCount === 0) {
-      return res.status(404).json({ message: "Group not found" });
-    }
-
-    if (result.modifiedCount === 0) {
-      return res.status(400).json({
-        message: "Member not added. They may already be in the group.",
-      });
-    }
-
-    console.log(`Added member ${memberId} to group ${groupId}`);
-    res.status(200).json({ message: "Member added successfully" });
-  } catch (err: any) {
-    console.error(err);
-    res.status(500).json({ message: err.message });
-  }
-});
-
-//@ts-ignore
+//  REMOVE Member
 groupsRouter.post("/remove-member", async (req: Request, res: Response) => {
   try {
     const { groupId, memberId } = req.body;
