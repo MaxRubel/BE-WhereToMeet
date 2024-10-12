@@ -4,10 +4,28 @@ import { ObjectId } from "mongodb";
 
 const groupsRouter = express.Router();
 
-// GET all groups (TEST FUNCTION
+// GET groups of User
 groupsRouter.get("/", async (req: any, res: any) => {
+  const userId = req.query.userId;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'userId is required' });
+  }
+
   try {
-    res.status(200).json({ message: "success from groups" });
+    const groups = await db.collection("groups").find({ ownerId: userId }).toArray();
+    res.status(200).json(groups);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+groupsRouter.get("/:id", async (req: any, res: any) => {
+  const id = req.params.id
+  console.log("GET: Single Group: ", id)
+  try {
+    const result = await db.collection("groups").findOne({ _id: new ObjectId(id) })
+    res.status(200).json(result);
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }
