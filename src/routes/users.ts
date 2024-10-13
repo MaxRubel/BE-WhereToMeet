@@ -18,7 +18,7 @@ userRouter.post("/", async (req: Request, res: Response) => {
   }
 });
 
-// Check if user exists
+//  Check if user exists
 userRouter.post("/exists", async (req: Request, res: Response) => {
   const uid = req.body.uid;
 
@@ -48,7 +48,7 @@ userRouter.get("/", async (req: Request, res: Response) => {
   }
 });
 
-// Edit User
+//  Update User
 userRouter.put("/:id", async (req: Request, res: Response) => {
   const id = req.params.id as string;
   const updates = req.body;
@@ -78,7 +78,7 @@ userRouter.delete("/:id", async (req: Request, res: Response) => {
   }
 });
 
-// Search for User
+//  Search for User
 userRouter.get("/find-user/:query", async (req: Request, res: Response) => {
   const searchValue = req.params.query
 
