@@ -52,7 +52,7 @@ userRouter.get("/", async (req: Request, res: Response) => {
 userRouter.put("/:id", async (req: Request, res: Response) => {
   const id = req.params.id as string;
   const updates = req.body;
-  console.log(req.body);
+
   try {
     await db
       .collection("users")
@@ -72,6 +72,25 @@ userRouter.delete("/:id", async (req: Request, res: Response) => {
     await db.collection("users").deleteOne({ _id: new ObjectId(id) });
     res.status(204).json({ message: "success" });
     console.log(`DELETE: Delete User ${id}`);
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Search for User
+userRouter.get("/find-user/:query", async (req: Request, res: Response) => {
+  const searchValue = req.params.query
+
+  try {
+    const result = await db.collection("users").find({
+      $or: [
+        { name: { $regex: searchValue, $options: 'i' } },
+        { email: { $regex: searchValue, $options: 'i' } }
+      ]
+    }).toArray();
+    res.status(200).json(result)
+    console.log("GET: Search for Users");
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ message: err.message });
