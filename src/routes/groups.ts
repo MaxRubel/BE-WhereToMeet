@@ -14,6 +14,7 @@ groupsRouter.get("/", async (req: any, res: any) => {
 
   try {
     const groups = await db.collection("groups").find({ ownerId: userId }).toArray();
+    console.log("GET: Groups of User: ", userId)
     res.status(200).json(groups);
   } catch (err: any) {
     res.status(500).json({ message: err.message });
@@ -45,11 +46,16 @@ groupsRouter.get("/:id", async (req: any, res: any) => {
 
 // CREATE Group
 groupsRouter.post("/", async (req: Request, res: Response) => {
+  const dateCreated = new Date()
   try {
-    await db.collection("groups").insertOne(req.body);
+    const insertItem = { ...req.body, dateCreated }
+    const result = await db.collection("groups").insertOne(insertItem);
     res
       .status(201)
-      .json({ message: "Group created successfully", data: req.body });
+      .json({
+        message: "Group created successfully",
+        data: { ...result, dateCreated }
+      });
   } catch (err) {
     console.error(err);
     res
@@ -185,4 +191,17 @@ groupsRouter.post("/remove-member", async (req: Request, res: Response) => {
   }
 });
 
+groupsRouter.post("/get-members", async (req: any, res: any) => {
+  //@ts-ignore
+  const objectIds = req.body.map(id => new ObjectId(id));
+  const query = { _id: { $in: objectIds } };
+  try {
+    const result = await db.collection("users").find(query).toArray();
+    console.log("POST: retreive members of group")
+    res.status(200).json(result);
+  } catch (err: any) {
+    console.error("error getting members of group, ", err)
+    res.status(500).json({ message: err.message });
+  }
+});
 export default groupsRouter;
