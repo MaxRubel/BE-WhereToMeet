@@ -34,9 +34,10 @@ eventsRouter.get("/user-events/:id", async (req: Request, res: Response): Promis
     res.status(400).json({ error: 'userId is required' });
     return;
   }
+  
   try{
     const userGroups = await db.collection("groups").find({
-      members: userId
+      "members._id": userId
     }).toArray();
     const groupIds = userGroups.map((group) => group._id.toString());
 
