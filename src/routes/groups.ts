@@ -95,9 +95,13 @@ groupsRouter.put("/:id", async (request: Request, response: Response) => {
 groupsRouter.delete("/:id", async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
+
     await db.collection("groups").deleteOne({ _id: new ObjectId(id) });
-    res.status(204);
-    console.log(`DELETE: Delete Group: ${id}`);
+    await db.collection("events").deleteMany({ groupId: id });
+
+    console.log(`DELETE: Deleted Group: ${id}`);
+    res.status(204).json({ message: `deleted group ${id}` });
+
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ message: err.message });
@@ -110,7 +114,6 @@ groupsRouter.delete("/:id", async (req: Request, res: Response) => {
 groupsRouter.post("/add-member", async (req: Request, res: Response) => {
   try {
     const { groupId, memberId } = req.body;
-    console.log(req.body);
 
     if (!groupId || !memberId) {
       return res
