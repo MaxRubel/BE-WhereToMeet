@@ -65,31 +65,27 @@ groupsRouter.post("/", async (req: Request, res: Response) => {
 });
 
 // UPDATE Group
-groupsRouter.put("/:id", async (req: Request, res: Response) => {
-  delete req.body._id;
+groupsRouter.put("/:id", async (request: Request, response: Response) => {
+  delete request.body._id;
 
-  const id = req.params.id;
+  const id = request.params.id;
+  console.log(id)
 
-  const filter = { _id: new ObjectId(id) };
-  const update = {
-    $set: {
-      name: req.body.name,
-      description: req.body.description,
-    },
-  };
-
-  const options = { upsert: false };
 
   try {
-    const result = await db
-      .collection("groups")
-      .updateOne(filter, update, options);
-    res
+    const result = await
+      db.collection("groups").updateOne(
+        { _id: new ObjectId(id) },
+        { $set: request.body },
+        { upsert: true })
+
+    console.log("PUT: updating group ", id)
+    response
       .status(201)
       .json({ message: "Group updated successfully", data: result });
   } catch (err) {
     console.error(err);
-    res
+    response
       .status(500)
       .json({ message: "An error occurred while updating the group" });
   }
