@@ -27,6 +27,7 @@ export type Group = {
 
 export type Event = {
   _id: string; //primary key
+  title: string;
   ownerId: string; //foreign key
   groupId: string; //foreign key
 
