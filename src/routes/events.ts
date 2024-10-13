@@ -27,6 +27,29 @@ eventsRouter.get("/", async (req: any, res: any) => {
   }
 });
 
+// Get events for users groups
+eventsRouter.get("/user-events/:id", async (req: Request, res: Response): Promise<void> => {
+  const userId = req.params.id as string;
+  if (!userId) {
+    res.status(400).json({ error: 'userId is required' });
+    return;
+  }
+  try{
+    const userGroups = await db.collection("groups").find({
+      members: userId
+    }).toArray();
+    const groupIds = userGroups.map((group) => group._id.toString());
+
+    const events = await db.collection("events").find({
+      groupId: {$in: groupIds}
+    }).toArray();
+
+    res.status(200).json({ events });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // Delete a Event
 eventsRouter.delete("/:id", async (req: Request, res: Response) => {
   try{
