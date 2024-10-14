@@ -27,6 +27,19 @@ eventsRouter.get("/", async (req: any, res: any) => {
   }
 });
 
+// Get Single Event
+eventsRouter.get("/:id", async (req: Request, res: Response) => {
+  try{
+    const id = req.params.id;
+    await db.collection("events").findOne({ _id: new ObjectId(id)});
+    res.status(200).json({ id });
+
+  } catch (err: any){
+    console.error(err);
+    res.status(500).json({message: err.message});
+  }
+});
+
 // Get events for users groups
 eventsRouter.get("/user-events/:id", async (req: Request, res: Response): Promise<void> => {
   const userId = req.params.id as string;
