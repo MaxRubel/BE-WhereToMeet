@@ -13,33 +13,66 @@ groupsRouter.get("/", async (req: any, res: any) => {
   }
 
   try {
-    const groups = await db.collection("groups").find({ ownerId: userId }).toArray();
+    const result = await db.collection("groups").aggregate([
+      {
+        $match: { ownerId: userId }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          let: { memberIds: "$members._id" },
+          pipeline: [
+            { $match: { $expr: { $in: [{ $toString: "$_id" }, "$$memberIds"] } } }
+          ],
+          as: 'usersData'
+        }
+      },
+      {
+        $addFields: {
+          members: {
+            $map: {
+              input: "$usersData",
+              as: "user",
+              in: {
+                $mergeObjects: [
+                  "$$user",
+                  { _id: { $toString: "$$user._id" } }
+                ]
+              }
+            }
+          }
+        }
+      }
+    ]).toArray();
+
     console.log("GET: Groups of User: ", userId)
-    res.status(200).json(groups);
+    res.status(200).json(result);
   } catch (err: any) {
+    console.error(err)
     res.status(500).json({ message: err.message });
   }
 });
 
+//  GET Single Group
 groupsRouter.get("/:id", async (req: any, res: any) => {
   const id = req.params.id
-  console.log("GET: Single Group: ", id)
   try {
-    const result = await db.collection("groups").findOne({ _id: new ObjectId(id) })
-    res.status(200).json(result);
-  } catch (err: any) {
-    res.status(500).json({ message: err.message });
-  }
-});
+    const group = await db.collection("groups").findOne({ _id: new ObjectId(id) })
+    if (group) {
+      //@ts-ignore
+      const objectIds = group.members.map(member => new ObjectId(member._id));
 
-//GET Single Group
-groupsRouter.get("/:id", async (req: any, res: any) => {
-  const id = req.params.id
-  console.log("GET: Single Group: ", id)
-  try {
-    const result = await db.collection("groups").findOne({ _id: new ObjectId(id) })
-    res.status(200).json(result);
+      const query = { _id: { $in: objectIds } };
+      const members = await db.collection("users").find(query).toArray();
+      const result = { ...group, members }
+      console.log("GET: Single Group: ", id)
+      res.status(200).json(result);
+    } else {
+      console.error(`no group with ID ${id} found`)
+      res.status(400).json({ message: "No Group with that ID exists" });
+    }
   } catch (err: any) {
+    console.error("error getting group ", id, err)
     res.status(500).json({ message: err.message });
   }
 });
@@ -50,6 +83,7 @@ groupsRouter.post("/", async (req: Request, res: Response) => {
   try {
     const insertItem = { ...req.body, dateCreated }
     const result = await db.collection("groups").insertOne(insertItem);
+    console.log("POST: Create group: ", result.insertedId)
     res
       .status(201)
       .json({
@@ -100,7 +134,7 @@ groupsRouter.delete("/:id", async (req: Request, res: Response) => {
     await db.collection("events").deleteMany({ groupId: id });
 
     console.log(`DELETE: Deleted Group: ${id}`);
-    res.status(204).json({ message: `deleted group ${id}` });
+    res.status(200).json({ message: `deleted group ${id}` });
 
   } catch (err: any) {
     console.error(err);
@@ -190,17 +224,4 @@ groupsRouter.post("/remove-member", async (req: Request, res: Response) => {
   }
 });
 
-groupsRouter.post("/get-members", async (req: any, res: any) => {
-  //@ts-ignore
-  const objectIds = req.body.map(id => new ObjectId(id));
-  const query = { _id: { $in: objectIds } };
-  try {
-    const result = await db.collection("users").find(query).toArray();
-    console.log("POST: retreive members of group")
-    res.status(200).json(result);
-  } catch (err: any) {
-    console.error("error getting members of group, ", err)
-    res.status(500).json({ message: err.message });
-  }
-});
 export default groupsRouter;
