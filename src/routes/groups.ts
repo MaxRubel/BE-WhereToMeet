@@ -9,87 +9,94 @@ groupsRouter.get("/", async (req: any, res: any) => {
   const userId = req.query.userId;
 
   if (!userId) {
-    return res.status(400).json({ error: 'userId is required' });
+    return res.status(400).json({ error: "userId is required" });
   }
 
   try {
-    const result = await db.collection("groups").aggregate([
-      {
-        $match: { ownerId: userId }
-      },
-      {
-        $lookup: {
-          from: 'users',
-          let: { memberIds: "$members._id" },
-          pipeline: [
-            { $match: { $expr: { $in: [{ $toString: "$_id" }, "$$memberIds"] } } }
-          ],
-          as: 'usersData'
-        }
-      },
-      {
-        $addFields: {
-          members: {
-            $map: {
-              input: "$usersData",
-              as: "user",
-              in: {
-                $mergeObjects: [
-                  "$$user",
-                  { _id: { $toString: "$$user._id" } }
-                ]
-              }
-            }
-          }
-        }
-      }
-    ]).toArray();
+    const result = await db
+      .collection("groups")
+      .aggregate([
+        {
+          $match: { ownerId: userId },
+        },
+        {
+          $lookup: {
+            from: "users",
+            let: { memberIds: "$members._id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $in: [{ $toString: "$_id" }, "$$memberIds"] },
+                },
+              },
+            ],
+            as: "usersData",
+          },
+        },
+        {
+          $addFields: {
+            members: {
+              $map: {
+                input: "$usersData",
+                as: "user",
+                in: {
+                  $mergeObjects: [
+                    "$$user",
+                    { _id: { $toString: "$$user._id" } },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      ])
+      .toArray();
 
-    console.log("GET: Groups of User: ", userId)
+    console.log("GET: Groups of User: ", userId);
     res.status(200).json(result);
   } catch (err: any) {
-    console.error(err)
+    console.error(err);
     res.status(500).json({ message: err.message });
   }
 });
 
 //  GET Single Group
 groupsRouter.get("/:id", async (req: any, res: any) => {
-  const id = req.params.id
+  const id = req.params.id;
   try {
-    const group = await db.collection("groups").findOne({ _id: new ObjectId(id) })
+    const group = await db
+      .collection("groups")
+      .findOne({ _id: new ObjectId(id) });
     if (group) {
       //@ts-ignore
-      const objectIds = group.members.map(member => new ObjectId(member._id));
+      const objectIds = group.members.map((member) => new ObjectId(member._id));
 
       const query = { _id: { $in: objectIds } };
       const members = await db.collection("users").find(query).toArray();
-      const result = { ...group, members }
-      console.log("GET: Single Group: ", id)
+      const result = { ...group, members };
+      console.log("GET: Single Group: ", id);
       res.status(200).json(result);
     } else {
-      console.error(`no group with ID ${id} found`)
+      console.error(`no group with ID ${id} found`);
       res.status(400).json({ message: "No Group with that ID exists" });
     }
   } catch (err: any) {
-    console.error("error getting group ", id, err)
+    console.error("error getting group ", id, err);
     res.status(500).json({ message: err.message });
   }
 });
 
 // CREATE Group
 groupsRouter.post("/", async (req: Request, res: Response) => {
-  const dateCreated = new Date()
+  const dateCreated = new Date();
   try {
-    const insertItem = { ...req.body, dateCreated }
+    const insertItem = { ...req.body, dateCreated };
     const result = await db.collection("groups").insertOne(insertItem);
-    console.log("POST: Create group: ", result.insertedId)
-    res
-      .status(201)
-      .json({
-        message: "Group created successfully",
-        data: { ...result, dateCreated }
-      });
+    console.log("POST: Create group: ", result.insertedId);
+    res.status(201).json({
+      message: "Group created successfully",
+      data: { ...result, dateCreated },
+    });
   } catch (err) {
     console.error(err);
     res
@@ -103,17 +110,17 @@ groupsRouter.put("/:id", async (request: Request, response: Response) => {
   delete request.body._id;
 
   const id = request.params.id;
-  console.log(id)
-
 
   try {
-    const result = await
-      db.collection("groups").updateOne(
+    const result = await db
+      .collection("groups")
+      .updateOne(
         { _id: new ObjectId(id) },
         { $set: request.body },
-        { upsert: true })
+        { upsert: true }
+      );
 
-    console.log("PUT: updating group ", id)
+    console.log("PUT: updating group ", id);
     response
       .status(201)
       .json({ message: "Group updated successfully", data: result });
@@ -135,13 +142,11 @@ groupsRouter.delete("/:id", async (req: Request, res: Response) => {
 
     console.log(`DELETE: Deleted Group: ${id}`);
     res.status(200).json({ message: `deleted group ${id}` });
-
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ message: err.message });
   }
 });
-
 
 //@ts-ignore
 // ADD Member
