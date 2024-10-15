@@ -1,5 +1,5 @@
 import express from "express";
-import {db} from "../index";
+import { db } from "../index";
 import { Request, Response } from "express";
 import { ObjectId } from "mongodb";
 const eventsRouter = express.Router();
@@ -29,14 +29,18 @@ eventsRouter.get("/", async (req: any, res: any) => {
 
 // Get Single Event
 eventsRouter.get("/:id", async (req: Request, res: Response) => {
-  try{
+  try {
     const id = req.params.id;
-    await db.collection("events").findOne({ _id: new ObjectId(id)});
-    res.status(200).json({ id });
-
-  } catch (err: any){
+    const event = await db.collection("events").findOne({ _id: new ObjectId(id) });
+    
+    // if (!event) {
+    //   return res.status(404).json({ message: "Event not found" });
+    // }
+    
+    res.status(200).json(event);
+  } catch (err: any) {
     console.error(err);
-    res.status(500).json({message: err.message});
+    res.status(500).json({ message: err.message });
   }
 });
 
