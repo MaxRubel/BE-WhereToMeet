@@ -167,40 +167,57 @@ eventsRouter.post("/add-vote", async (req: Request, res: Response) => {
         .json({ message: "SuggestionId and userId are required" });
     }
 
-    const event = await db.collection('events').findOne({
+    const existingVote = await db.collection('events').findOne({
       "suggestions._id": suggestionId,
       "suggestions.votes.voter": userId
     });
 
-    if (event) {
-      return res.status(400).json({ message: "User already voted on this suggestion" });
-    }
-
-    const result = await db.collection('events').updateOne(
-      { "suggestions._id": suggestionId },
-      {
-        //@ts-ignore
-        $push: {
+    if (existingVote) {
+      const remVote = await db.collection('events').updateOne(
+        { "suggestions._id": suggestionId },
+        { $pull: {
           "suggestions.$.votes": {
             voter: userId
           }
-        }
+        }}
+      );
+      
+      if (remVote.modifiedCount === 0) {
+        return res.status(404).json({ message: "suggestion not found"})
       }
-    );
+    } else {
+      const addVote = await db.collection('events').updateOne(
+        { "suggestions._id": suggestionId },
+        { $push: {
+          "suggestions.$.votes": {
+            voter: userId
+          }
+        }}
+      );
 
-    if (result.modifiedCount === 0) {
-      return res.status(404).json({ message: "Suggestion not found" });
+      if (addVote.modifiedCount === 0) {
+        return res.status(404).json({ message: "suggestion not found"})
+      }
     }
 
     const updatedEvent = await db.collection('events').findOne(
       { "suggestions._id": suggestionId },
       { projection: { "suggestions.$": 1 } }
     );
+
+    if (!updatedEvent || !updatedEvent.suggestions[0]) {
+      return res.status(404).json({ message: "Suggestion not found" });
+    }
     //@ts-ignore
     const updatedSuggestion = updatedEvent.suggestions[0]; 
     const voteCount = updatedSuggestion.votes.length; 
+    const action = existingVote ? 'removed' : 'added';
 
-    res.status(200).json({ message: "Vote added successfully", voteCount });
+    res.status(200).json({ 
+      message: `Vote ${action} successfully`, 
+      voteCount,
+      suggestion: updatedSuggestion
+    });
 
   } catch (err: any) {
     console.error(err);
