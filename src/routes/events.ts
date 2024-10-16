@@ -131,6 +131,7 @@ eventsRouter.post(
   }
 );
 
+// Remove Suggestion to Event
 eventsRouter.post(
   "/remove-suggestion",
   async (request: Request, response: Response) => {
@@ -152,3 +153,57 @@ eventsRouter.post(
 );
 
 export default eventsRouter;
+
+// Add vote to Suggestion
+// userId, event_id
+//@ts-ignore
+eventsRouter.post("/add-vote", async (req: Request, res: Response) => {
+  try {
+    const { suggestionId, userId } = req.body;
+    
+    if (!suggestionId || !userId) {
+      return res
+        .status(400)
+        .json({ message: "SuggestionId and userId are required" });
+    }
+
+    const event = await db.collection('events').findOne({
+      "suggestions._id": suggestionId,
+      "suggestions.votes.voter": userId
+    });
+
+    if (event) {
+      return res.status(400).json({ message: "User already voted on this suggestion" });
+    }
+
+    const result = await db.collection('events').updateOne(
+      { "suggestions._id": suggestionId },
+      {
+        //@ts-ignore
+        $push: {
+          "suggestions.$.votes": {
+            voter: userId
+          }
+        }
+      }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ message: "Suggestion not found" });
+    }
+
+    const updatedEvent = await db.collection('events').findOne(
+      { "suggestions._id": suggestionId },
+      { projection: { "suggestions.$": 1 } }
+    );
+    //@ts-ignore
+    const updatedSuggestion = updatedEvent.suggestions[0]; 
+    const voteCount = updatedSuggestion.votes.length; 
+
+    res.status(200).json({ message: "Vote added successfully", voteCount });
+
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+});
