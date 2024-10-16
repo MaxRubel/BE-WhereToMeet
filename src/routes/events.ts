@@ -97,6 +97,8 @@ eventsRouter.put("/:id", async (req: Request, res: Response) => {
   const id = req.params.id as string;
   const updates = req.body;
 
+  delete req.body._id;
+
   try {
     await db
       .collection("events")
@@ -114,18 +116,33 @@ eventsRouter.post(
   "/add-suggestion",
   async (request: Request, response: Response) => {
     const { eventId } = request.body;
-    delete request.body[eventId];
-    db.collection("events").updateOne(
-      { _id: ObjectId.createFromHexString(eventId) },
-      {
-        $push: {
-          // Push the new object into the suggestions array
-          suggestions: request.body,
-        },
-      }
-    );
 
     try {
+      db.collection("events").updateOne(
+        { _id: ObjectId.createFromHexString(eventId) },
+        { $push: { suggestions: request.body } }
+      );
+      console.log("POST: adding suggestion to event: ", eventId);
+      response.status(200).json({ message: "success" });
+    } catch (err: any) {
+      console.error(err);
+      response.status(500).json({ message: err.message });
+    }
+  }
+);
+
+eventsRouter.post(
+  "/remove-suggestion",
+  async (request: Request, response: Response) => {
+    const { eventId, suggestionId } = request.body;
+
+    try {
+      db.collection("events").updateOne(
+        { _id: ObjectId.createFromHexString(eventId) },
+        //@ts-ignore
+        { $pull: { suggestions: { _id: suggestionId } } }
+      );
+      console.log("POST: removing suggestion from event: ", eventId);
       response.status(200).json({ message: "success" });
     } catch (err: any) {
       console.error(err);
