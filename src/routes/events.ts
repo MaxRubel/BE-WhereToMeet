@@ -179,7 +179,8 @@ eventsRouter.post("/add-vote", async (req: Request, res: Response) => {
           "suggestions.$.votes": {
             voter: userId
           }
-        }}
+        } as any
+      }
       );
       
       if (remVote.modifiedCount === 0) {
@@ -192,7 +193,8 @@ eventsRouter.post("/add-vote", async (req: Request, res: Response) => {
           "suggestions.$.votes": {
             voter: userId
           }
-        }}
+        } as any
+      }
       );
 
       if (addVote.modifiedCount === 0) {
