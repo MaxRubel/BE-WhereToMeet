@@ -17,7 +17,12 @@ groupsRouter.get("/", async (req: any, res: any) => {
       .collection("groups")
       .aggregate([
         {
-          $match: { ownerId: userId },
+          $match: {
+            $or: [
+              { ownerId: userId },
+              { "members._id": userId }, // Match groups where user is a member
+            ],
+          },
         },
         {
           $lookup: {
@@ -59,6 +64,7 @@ groupsRouter.get("/", async (req: any, res: any) => {
     res.status(500).json({ message: err.message });
   }
 });
+
 
 //  GET Single Group
 groupsRouter.get("/:id", async (req: any, res: any) => {
