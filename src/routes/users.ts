@@ -80,17 +80,41 @@ userRouter.delete("/:id", async (req: Request, res: Response) => {
 
 //  Search for User
 userRouter.get("/find-user/:query", async (req: Request, res: Response) => {
-  const searchValue = req.params.query
+  const searchValue = req.params.query;
 
   try {
-    const result = await db.collection("users").find({
-      $or: [
-        { name: { $regex: searchValue, $options: 'i' } },
-        { email: { $regex: searchValue, $options: 'i' } }
-      ]
-    }).toArray();
-    res.status(200).json(result)
+    const result = await db
+      .collection("users")
+      .find({
+        $or: [
+          { name: { $regex: searchValue, $options: "i" } },
+          { email: { $regex: searchValue, $options: "i" } },
+        ],
+      })
+      .toArray();
+    res.status(200).json(result);
     console.log("GET: Search for Users");
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+//  Get All Chat Users
+userRouter.post("/get-chat-users", async (req: Request, res: Response) => {
+  const userIDArray = req.body.users;
+
+  try {
+    const objectIdArray = userIDArray?.map((id: string) => new ObjectId(id));
+    const result = await db
+      .collection("users")
+      .find({
+        _id: { $in: objectIdArray },
+      })
+      .toArray();
+
+    res.status(200).json({ data: result, message: "successful!" });
+    console.log("POST: Get Chat User Data");
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ message: err.message });
