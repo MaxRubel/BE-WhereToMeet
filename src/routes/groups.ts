@@ -7,7 +7,7 @@ const groupsRouter = express.Router();
 // GET groups of User
 groupsRouter.get("/", async (req: any, res: any) => {
   const userId = req.query.userId;
-
+  console.log("i have been called")
   if (!userId) {
     return res.status(400).json({ error: "userId is required" });
   }

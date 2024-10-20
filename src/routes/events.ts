@@ -72,7 +72,7 @@ eventsRouter.get(
           groupId: { $in: groupIds },
         })
         .toArray();
-
+      console.log("GET: Get events of user")
       res.status(200).json({ events });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
