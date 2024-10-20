@@ -2,6 +2,7 @@ import express from "express";
 import { db } from "../index";
 import { Request, Response } from "express";
 import { ObjectId } from "mongodb";
+import { isPrimitive } from "util";
 const eventsRouter = express.Router();
 
 //Create a new events to the DB
@@ -160,7 +161,7 @@ export default eventsRouter;
 eventsRouter.post("/add-vote", async (req: Request, res: Response) => {
   try {
     const { suggestionId, userId } = req.body;
-    
+
     if (!suggestionId || !userId) {
       return res
         .status(400)
@@ -175,30 +176,32 @@ eventsRouter.post("/add-vote", async (req: Request, res: Response) => {
     if (existingVote) {
       const remVote = await db.collection('events').updateOne(
         { "suggestions._id": suggestionId },
-        { $pull: {
-          "suggestions.$.votes": {
-            voter: userId
-          }
-        } as any
-      }
+        {
+          $pull: {
+            "suggestions.$.votes": {
+              voter: userId
+            }
+          } as any
+        }
       );
-      
+
       if (remVote.modifiedCount === 0) {
-        return res.status(404).json({ message: "suggestion not found"})
+        return res.status(404).json({ message: "suggestion not found" })
       }
     } else {
       const addVote = await db.collection('events').updateOne(
         { "suggestions._id": suggestionId },
-        { $push: {
-          "suggestions.$.votes": {
-            voter: userId
-          }
-        } as any
-      }
+        {
+          $push: {
+            "suggestions.$.votes": {
+              voter: userId
+            }
+          } as any
+        }
       );
 
       if (addVote.modifiedCount === 0) {
-        return res.status(404).json({ message: "suggestion not found"})
+        return res.status(404).json({ message: "suggestion not found" })
       }
     }
 
@@ -211,12 +214,12 @@ eventsRouter.post("/add-vote", async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Suggestion not found" });
     }
     //@ts-ignore
-    const updatedSuggestion = updatedEvent.suggestions[0]; 
-    const voteCount = updatedSuggestion.votes.length; 
+    const updatedSuggestion = updatedEvent.suggestions[0];
+    const voteCount = updatedSuggestion.votes.length;
     const action = existingVote ? 'removed' : 'added';
 
-    res.status(200).json({ 
-      message: `Vote ${action} successfully`, 
+    res.status(200).json({
+      message: `Vote ${action} successfully`,
       voteCount,
       suggestion: updatedSuggestion
     });
@@ -226,3 +229,21 @@ eventsRouter.post("/add-vote", async (req: Request, res: Response) => {
     res.status(500).json({ message: err.message });
   }
 });
+
+eventsRouter.get("/check-privacy/:id", async (req: Request, res: Response) => {
+  const id = req.params.id
+  try {
+    const result = await db.collection("events").findOne({ _id: new ObjectId(id) })
+    if (!result) {
+      res.status(400).json({ error: "no event with that id exists" })
+      return
+    }
+    if (result.private) {
+      res.status(200).json({ isPrivate: true })
+    } else {
+      res.status(200).json({ isPrivate: false })
+    }
+  } catch (err: any) {
+    res.status(500).json({ message: err.message })
+  }
+})
