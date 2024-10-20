@@ -2,7 +2,7 @@ import express from "express";
 import { db } from "../index";
 import { Request, Response } from "express";
 import { ObjectId } from "mongodb";
-import { isPrimitive } from "util";
+
 const eventsRouter = express.Router();
 
 //Create a new events to the DB
@@ -35,11 +35,6 @@ eventsRouter.get("/:id", async (req: Request, res: Response) => {
     const event = await db
       .collection("events")
       .findOne({ _id: new ObjectId(id) });
-
-    // if (!event) {
-    //   return res.status(404).json({ message: "Event not found" });
-    // }
-
     res.status(200).json(event);
   } catch (err: any) {
     console.error(err);
@@ -60,20 +55,25 @@ eventsRouter.get(
     try {
       const userGroups = await db
         .collection("groups")
-        .find({
-          "members._id": userId,
-        })
+        .find({ "members._id": userId })
         .toArray();
+
       const groupIds = userGroups.map((group) => group._id.toString());
 
-      const events = await db
+      const groupEvents = await db
         .collection("events")
         .find({
           groupId: { $in: groupIds },
+          ownerId: { $ne: userId }
         })
         .toArray();
-      console.log("GET: Get events of user")
-      res.status(200).json({ events });
+
+      const createdEvents = await db
+        .collection("events")
+        .find({ ownerId: userId })
+        .toArray()
+
+      res.status(200).json({ events: [...groupEvents, ...createdEvents] });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
@@ -85,7 +85,7 @@ eventsRouter.delete("/:id", async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
     await db.collection("events").deleteOne({ _id: new ObjectId(id) });
-    res.status(204).json({ message: "sucess" });
+    res.status(200).json({ message: "success" });
     console.log(`DELETE: Delete Event ${id}`);
   } catch (err: any) {
     console.error(err);
@@ -156,7 +156,6 @@ eventsRouter.post(
 export default eventsRouter;
 
 // Add vote to Suggestion
-// userId, event_id
 //@ts-ignore
 eventsRouter.post("/add-vote", async (req: Request, res: Response) => {
   try {
