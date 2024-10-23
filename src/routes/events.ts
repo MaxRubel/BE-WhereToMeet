@@ -1,7 +1,47 @@
-import express from "express";
+import express, { NextFunction } from "express";
 import { db } from "../index";
 import { Request, Response } from "express";
 import { ObjectId } from "mongodb";
+import { verifyFirebaseToken } from "../auth/firebaseAuth";
+import { DecodedIdToken } from "firebase-admin/lib/auth/token-verifier";
+import { sendMail } from "../../components/Email";
+
+interface AuthRequest extends Request {
+  user?: DecodedIdToken;
+}
+
+function validateInput(eventId: unknown, email: unknown): { 
+  isValid: boolean; 
+  error?: string;
+  data?: { eventId: string; inviteeEmail: string; }
+} {
+  if (!eventId || typeof eventId !== 'string' || eventId.trim().length === 0) {
+    return { isValid: false, error: 'Valid event ID is required' };
+  }
+
+  if (!email || typeof email !== 'string') {
+    return { isValid: false, error: 'Valid email address is required' };
+  }
+
+  const cleanEmail = email.toLowerCase().trim();
+  if (!isValidEmail(cleanEmail)) {
+    return { isValid: false, error: 'Invalid email format' };
+  }
+
+  return { 
+    isValid: true,
+    data: {
+      eventId: eventId.trim(),
+      inviteeEmail: cleanEmail
+    }
+  };
+}
+
+function isValidEmail(email: string): boolean {
+  // RFC 5322 compliant email regex
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  return emailRegex.test(email) && email.length <= 254;
+}
 
 const eventsRouter = express.Router();
 
@@ -246,3 +286,51 @@ eventsRouter.get("/check-privacy/:id", async (req: Request, res: Response) => {
     res.status(500).json({ message: err.message })
   }
 })
+
+eventsRouter.post('/invite', verifyFirebaseToken, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const validation = validateInput(req.body.eventId, req.body.inviteeEmail);
+    if (!validation.isValid) {
+      res.status(400).json({ error: validation.error});
+      return;
+    }
+
+    const { eventId, inviteeEmail } = validation.data!;
+
+
+    if (!req.user?.uid || !req.user?.email) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    const inviterId = req.user.uid; // comes from token, req.ownerId?
+    const inviterEmail = req.user.email;
+
+    if (!inviterEmail) {
+      res.status(400).json({ error: 'email not found' });
+      return
+    }
+
+    const eventLink = `${process.env.FRONTEND_URL}/events/${eventId}`; // make sure to change the damin later, might need https to work due to security
+
+    const subject = 'You\'re invited to an event!';
+    const text = `
+      Hello!
+
+      You've been invited to an event by ${inviterEmail}.
+      Click here to view the event: ${eventLink}
+
+      Regards,
+      Where To Meet
+    `;
+
+    await sendMail(inviteeEmail, subject, text);
+    res.status(200).json({ message: 'Invite Sent'});
+  } catch (error) {
+    console.error('Error sending invite:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to send invitation'
+      });
+  }
+});
+
