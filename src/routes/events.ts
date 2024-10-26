@@ -2,7 +2,7 @@ import express, { NextFunction } from "express";
 import { db } from "../index";
 import { Request, Response } from "express";
 import { ObjectId } from "mongodb";
-import { verifyFirebaseToken } from "../auth/firebaseAuth";
+// import { verifyFirebaseToken } from "../auth/firebaseAuth";
 import { DecodedIdToken } from "firebase-admin/lib/auth/token-verifier";
 import { sendMail } from "../../components/Email";
 
@@ -287,50 +287,50 @@ eventsRouter.get("/check-privacy/:id", async (req: Request, res: Response) => {
   }
 })
 
-eventsRouter.post('/invite', verifyFirebaseToken, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const validation = validateInput(req.body.eventId, req.body.inviteeEmail);
-    if (!validation.isValid) {
-      res.status(400).json({ error: validation.error});
-      return;
-    }
+// eventsRouter.post('/invite', verifyFirebaseToken, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+//   try {
+//     const validation = validateInput(req.body.eventId, req.body.inviteeEmail);
+//     if (!validation.isValid) {
+//       res.status(400).json({ error: validation.error});
+//       return;
+//     }
 
-    const { eventId, inviteeEmail } = validation.data!;
+//     const { eventId, inviteeEmail } = validation.data!;
 
 
-    if (!req.user?.uid || !req.user?.email) {
-      res.status(401).json({ error: 'User not authenticated' });
-      return;
-    }
+//     if (!req.user?.uid || !req.user?.email) {
+//       res.status(401).json({ error: 'User not authenticated' });
+//       return;
+//     }
 
-    const inviterId = req.user.uid; // comes from token, req.ownerId?
-    const inviterEmail = req.user.email;
+//     const inviterId = req.user.uid; // comes from token, req.ownerId?
+//     const inviterEmail = req.user.email;
 
-    if (!inviterEmail) {
-      res.status(400).json({ error: 'email not found' });
-      return
-    }
+//     if (!inviterEmail) {
+//       res.status(400).json({ error: 'email not found' });
+//       return
+//     }
 
-    const eventLink = `${process.env.FRONTEND_URL}/events/${eventId}`; // make sure to change the damin later, might need https to work due to security
+//     const eventLink = `${process.env.FRONTEND_URL}/events/${eventId}`; // make sure to change the damin later, might need https to work due to security
 
-    const subject = 'You\'re invited to an event!';
-    const text = `
-      Hello!
+//     const subject = 'You\'re invited to an event!';
+//     const text = `
+//       Hello!
 
-      You've been invited to an event by ${inviterEmail}.
-      Click here to view the event: ${eventLink}
+//       You've been invited to an event by ${inviterEmail}.
+//       Click here to view the event: ${eventLink}
 
-      Regards,
-      Where To Meet
-    `;
+//       Regards,
+//       Where To Meet
+//     `;
 
-    await sendMail(inviteeEmail, subject, text);
-    res.status(200).json({ message: 'Invite Sent'});
-  } catch (error) {
-    console.error('Error sending invite:', error);
-      res.status(500).json({ 
-        error: error instanceof Error ? error.message : 'Failed to send invitation'
-      });
-  }
-});
+//     await sendMail(inviteeEmail, subject, text);
+//     res.status(200).json({ message: 'Invite Sent'});
+//   } catch (error) {
+//     console.error('Error sending invite:', error);
+//       res.status(500).json({ 
+//         error: error instanceof Error ? error.message : 'Failed to send invitation'
+//       });
+//   }
+// });
 
