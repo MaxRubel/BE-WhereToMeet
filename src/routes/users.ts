@@ -8,23 +8,17 @@ dotenv.config();
 
 const userRouter = express.Router();
 
-console.log("EMAIL_USER:", process.env.EMAIL_USER);
-console.log("EMAIL_PASS:", process.env.EMAIL_PASS);
-
-
-
 // Configure Nodemailer transporter
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 587, 
-  secure: false, 
+  port: 587,
+  secure: false,
   service: process.env.EMAIL_SERVICE,
   auth: {
-    user: process.env.EMAIL_USER, 
-    pass: process.env.EMAIL_PASS, 
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
-
 
 // Route to create a new user and send a welcome email
 userRouter.post("/", async (req: Request, res: Response) => {
@@ -84,7 +78,9 @@ userRouter.put("/:id", async (req: Request, res: Response) => {
   const updates = req.body;
 
   try {
-    await db.collection("users").updateOne({ _id: new ObjectId(id) }, { $set: updates });
+    await db
+      .collection("users")
+      .updateOne({ _id: new ObjectId(id) }, { $set: updates });
     console.log(`PUT: Updating User ${id}`);
     res.status(200).json({ message: "success" });
   } catch (err: any) {
@@ -108,12 +104,15 @@ userRouter.delete("/:id", async (req: Request, res: Response) => {
 userRouter.get("/find-user/:query", async (req: Request, res: Response) => {
   const searchValue = req.params.query;
   try {
-    const result = await db.collection("users").find({
-      $or: [
-        { name: { $regex: searchValue, $options: "i" } },
-        { email: { $regex: searchValue, $options: "i" } },
-      ],
-    }).toArray();
+    const result = await db
+      .collection("users")
+      .find({
+        $or: [
+          { name: { $regex: searchValue, $options: "i" } },
+          { email: { $regex: searchValue, $options: "i" } },
+        ],
+      })
+      .toArray();
     res.status(200).json(result);
     console.log("GET: Search for Users");
   } catch (err: any) {
@@ -126,9 +125,12 @@ userRouter.post("/get-chat-users", async (req: Request, res: Response) => {
   const userIDArray = req.body.users;
   try {
     const objectIdArray = userIDArray?.map((id: string) => new ObjectId(id));
-    const result = await db.collection("users").find({
-      _id: { $in: objectIdArray },
-    }).toArray();
+    const result = await db
+      .collection("users")
+      .find({
+        _id: { $in: objectIdArray },
+      })
+      .toArray();
     res.status(200).json({ data: result, message: "successful!" });
     console.log("POST: Get Chat User Data");
   } catch (err: any) {
