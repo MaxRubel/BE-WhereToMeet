@@ -1,5 +1,5 @@
 
-const nodemailer = require("nodemailer");
+import nodemailer from "nodemailer"
 
 const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -16,13 +16,13 @@ export async function sendMail(to: string, subject: string, text: string): Promi
         to, // list of emails
         subject,
         text,
-      };
+    };
 
-      try {
+    try {
         await transporter.sendMail(mailOptions);
-            console.log('Email Sent');
-        } catch (error) {
-            console.error('Error sending email:', error);
-            throw error
-        }
+        console.log('Email Sent');
+    } catch (error) {
+        console.error('Error sending email:', error);
+        throw error
+    }
 };

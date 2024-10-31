@@ -235,4 +235,17 @@ groupsRouter.post("/remove-member", async (req: Request, res: Response) => {
   }
 });
 
+//  GET Events of Group
+groupsRouter.get("/events-of/:groupId", async (req: any, res: any) => {
+  const groupId = req.params.groupId;
+  try {
+    const events = await db.collection("events").find({ groupId }).toArray()
+    res.status(200).json(events)
+    console.log("GET: getting events of group", groupId)
+  } catch (err: any) {
+    console.error("error getting group's events ", groupId, err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 export default groupsRouter;
