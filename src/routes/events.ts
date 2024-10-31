@@ -10,36 +10,40 @@ interface AuthRequest extends Request {
   user?: DecodedIdToken;
 }
 
-function validateInput(eventId: unknown, email: unknown): { 
-  isValid: boolean; 
+function validateInput(
+  eventId: unknown,
+  email: unknown
+): {
+  isValid: boolean;
   error?: string;
-  data?: { eventId: string; inviteeEmail: string; }
+  data?: { eventId: string; inviteeEmail: string };
 } {
-  if (!eventId || typeof eventId !== 'string' || eventId.trim().length === 0) {
-    return { isValid: false, error: 'Valid event ID is required' };
+  if (!eventId || typeof eventId !== "string" || eventId.trim().length === 0) {
+    return { isValid: false, error: "Valid event ID is required" };
   }
 
-  if (!email || typeof email !== 'string') {
-    return { isValid: false, error: 'Valid email address is required' };
+  if (!email || typeof email !== "string") {
+    return { isValid: false, error: "Valid email address is required" };
   }
 
   const cleanEmail = email.toLowerCase().trim();
   if (!isValidEmail(cleanEmail)) {
-    return { isValid: false, error: 'Invalid email format' };
+    return { isValid: false, error: "Invalid email format" };
   }
 
-  return { 
+  return {
     isValid: true,
     data: {
       eventId: eventId.trim(),
-      inviteeEmail: cleanEmail
-    }
+      inviteeEmail: cleanEmail,
+    },
   };
 }
 
 function isValidEmail(email: string): boolean {
   // RFC 5322 compliant email regex
-  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  const emailRegex =
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
   return emailRegex.test(email) && email.length <= 254;
 }
 
@@ -104,14 +108,14 @@ eventsRouter.get(
         .collection("events")
         .find({
           groupId: { $in: groupIds },
-          ownerId: { $ne: userId }
+          ownerId: { $ne: userId },
         })
         .toArray();
 
       const createdEvents = await db
         .collection("events")
         .find({ ownerId: userId })
-        .toArray()
+        .toArray();
 
       res.status(200).json({ events: [...groupEvents, ...createdEvents] });
     } catch (err: any) {
@@ -207,47 +211,49 @@ eventsRouter.post("/add-vote", async (req: Request, res: Response) => {
         .json({ message: "SuggestionId and userId are required" });
     }
 
-    const existingVote = await db.collection('events').findOne({
+    const existingVote = await db.collection("events").findOne({
       "suggestions._id": suggestionId,
-      "suggestions.votes.voter": userId
+      "suggestions.votes.voter": userId,
     });
 
     if (existingVote) {
-      const remVote = await db.collection('events').updateOne(
+      const remVote = await db.collection("events").updateOne(
         { "suggestions._id": suggestionId },
         {
           $pull: {
             "suggestions.$.votes": {
-              voter: userId
-            }
-          } as any
+              voter: userId,
+            },
+          } as any,
         }
       );
 
       if (remVote.modifiedCount === 0) {
-        return res.status(404).json({ message: "suggestion not found" })
+        return res.status(404).json({ message: "suggestion not found" });
       }
     } else {
-      const addVote = await db.collection('events').updateOne(
+      const addVote = await db.collection("events").updateOne(
         { "suggestions._id": suggestionId },
         {
           $push: {
             "suggestions.$.votes": {
-              voter: userId
-            }
-          } as any
+              voter: userId,
+            },
+          } as any,
         }
       );
 
       if (addVote.modifiedCount === 0) {
-        return res.status(404).json({ message: "suggestion not found" })
+        return res.status(404).json({ message: "suggestion not found" });
       }
     }
 
-    const updatedEvent = await db.collection('events').findOne(
-      { "suggestions._id": suggestionId },
-      { projection: { "suggestions.$": 1 } }
-    );
+    const updatedEvent = await db
+      .collection("events")
+      .findOne(
+        { "suggestions._id": suggestionId },
+        { projection: { "suggestions.$": 1 } }
+      );
 
     if (!updatedEvent || !updatedEvent.suggestions[0]) {
       return res.status(404).json({ message: "Suggestion not found" });
@@ -255,14 +261,13 @@ eventsRouter.post("/add-vote", async (req: Request, res: Response) => {
     //@ts-ignore
     const updatedSuggestion = updatedEvent.suggestions[0];
     const voteCount = updatedSuggestion.votes.length;
-    const action = existingVote ? 'removed' : 'added';
+    const action = existingVote ? "removed" : "added";
 
     res.status(200).json({
       message: `Vote ${action} successfully`,
       voteCount,
-      suggestion: updatedSuggestion
+      suggestion: updatedSuggestion,
     });
-
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ message: err.message });
@@ -270,67 +275,51 @@ eventsRouter.post("/add-vote", async (req: Request, res: Response) => {
 });
 
 eventsRouter.get("/check-privacy/:id", async (req: Request, res: Response) => {
-  const id = req.params.id
+  const id = req.params.id;
   try {
-    const result = await db.collection("events").findOne({ _id: new ObjectId(id) })
+    const result = await db
+      .collection("events")
+      .findOne({ _id: new ObjectId(id) });
     if (!result) {
-      res.status(400).json({ error: "no event with that id exists" })
-      return
+      res.status(400).json({ error: "no event with that id exists" });
+      return;
     }
     if (result.private) {
-      res.status(200).json({ isPrivate: true })
+      res.status(200).json({ isPrivate: true });
     } else {
-      res.status(200).json({ isPrivate: false })
+      res.status(200).json({ isPrivate: false });
     }
   } catch (err: any) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: err.message });
   }
-})
+});
 
-// eventsRouter.post('/invite', verifyFirebaseToken, async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-//   try {
-//     const validation = validateInput(req.body.eventId, req.body.inviteeEmail);
-//     if (!validation.isValid) {
-//       res.status(400).json({ error: validation.error});
-//       return;
-//     }
+eventsRouter.post(
+  "/invite",
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { eventId, inviteeEmail, inviterEmail } = req.body;
+      const eventLink = `${process.env.FRONTEND_URL}/events/${eventId}?guest=true&public=true`;
 
-//     const { eventId, inviteeEmail } = validation.data!;
+      const subject = "You're invited to an event!";
+      const text = `
+      Hello!
 
+      You've been invited to an event by ${inviterEmail}.
+      Click here to view the event: ${eventLink}
 
-//     if (!req.user?.uid || !req.user?.email) {
-//       res.status(401).json({ error: 'User not authenticated' });
-//       return;
-//     }
+      Regards,
+      Where To Meet
+    `;
 
-//     const inviterId = req.user.uid; // comes from token, req.ownerId?
-//     const inviterEmail = req.user.email;
-
-//     if (!inviterEmail) {
-//       res.status(400).json({ error: 'email not found' });
-//       return
-//     }
-
-//     const eventLink = `${process.env.FRONTEND_URL}/events/${eventId}`; // make sure to change the damin later, might need https to work due to security
-
-//     const subject = 'You\'re invited to an event!';
-//     const text = `
-//       Hello!
-
-//       You've been invited to an event by ${inviterEmail}.
-//       Click here to view the event: ${eventLink}
-
-//       Regards,
-//       Where To Meet
-//     `;
-
-//     await sendMail(inviteeEmail, subject, text);
-//     res.status(200).json({ message: 'Invite Sent'});
-//   } catch (error) {
-//     console.error('Error sending invite:', error);
-//       res.status(500).json({ 
-//         error: error instanceof Error ? error.message : 'Failed to send invitation'
-//       });
-//   }
-// });
-
+      await sendMail(inviteeEmail, subject, text);
+      res.status(200).json({ message: "Invite Sent" });
+    } catch (error) {
+      console.error("Error sending invite:", error);
+      res.status(500).json({
+        error:
+          error instanceof Error ? error.message : "Failed to send invitation",
+      });
+    }
+  }
+);
