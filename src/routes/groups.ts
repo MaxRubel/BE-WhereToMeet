@@ -99,7 +99,7 @@ groupsRouter.post("/", async (req: Request, res: Response) => {
     const insertItem = { ...req.body, dateCreated };
     const result = await db.collection("groups").insertOne(insertItem);
     console.log("POST: Create group: ", result.insertedId);
-    res.status(201).json({
+    res.status(200).json({
       message: "Group created successfully",
       data: { ...result, dateCreated },
     });
