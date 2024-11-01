@@ -1,44 +1,10 @@
-import express, { NextFunction } from "express";
+import express from "express";
 import { db } from "../index";
 import { Request, Response } from "express";
 import { ObjectId } from "mongodb";
 // import { verifyFirebaseToken } from "../auth/firebaseAuth";
 import { DecodedIdToken } from "firebase-admin/lib/auth/token-verifier";
 import { sendMail } from "../../components/Email";
-
-interface AuthRequest extends Request {
-  user?: DecodedIdToken;
-}
-
-function validateInput(
-  eventId: unknown,
-  email: unknown
-): {
-  isValid: boolean;
-  error?: string;
-  data?: { eventId: string; inviteeEmail: string };
-} {
-  if (!eventId || typeof eventId !== "string" || eventId.trim().length === 0) {
-    return { isValid: false, error: "Valid event ID is required" };
-  }
-
-  if (!email || typeof email !== "string") {
-    return { isValid: false, error: "Valid email address is required" };
-  }
-
-  const cleanEmail = email.toLowerCase().trim();
-  if (!isValidEmail(cleanEmail)) {
-    return { isValid: false, error: "Invalid email format" };
-  }
-
-  return {
-    isValid: true,
-    data: {
-      eventId: eventId.trim(),
-      inviteeEmail: cleanEmail,
-    },
-  };
-}
 
 function isValidEmail(email: string): boolean {
   // RFC 5322 compliant email regex
@@ -294,9 +260,46 @@ eventsRouter.get("/check-privacy/:id", async (req: Request, res: Response) => {
   }
 });
 
+eventsRouter.post("/add-invite", async (req: Request, res: Response) => {
+  const { email, eventId } = req.body;
+  try {
+    await db
+      .collection("events")
+      .updateOne({ _id: new ObjectId(eventId) }, { $push: { invites: email } });
+    res.status(200).json({ message: "invite added to event" });
+    console.log(`added email ${email} to invites of event ${eventId}`);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+eventsRouter.post("/check-invite", async (req: Request, res: Response) => {
+  const { email, eventId } = req.body;
+  console.log(`checking if ${email} is in event ${eventId}`);
+  try {
+    const existingInvite = await db.collection("events").findOne({
+      _id: new ObjectId(eventId),
+      invites: { $in: [email] },
+    });
+    if (existingInvite) {
+      res.status(200).json({
+        success: false,
+        message: "This email has already been invited.",
+      });
+    } else {
+      res.status(200).json({
+        success: true,
+        message: "This email has not been invited yet.",
+      });
+    }
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 eventsRouter.post(
   "/invite",
-  async (req: AuthRequest, res: Response): Promise<void> => {
+  async (req: Request, res: Response): Promise<void> => {
     try {
       const { eventId, inviteeEmail, inviterEmail } = req.body;
       const eventLink = `${process.env.FRONTEND_URL}/events/${eventId}?guest=true&public=true`;
@@ -312,7 +315,7 @@ eventsRouter.post(
       Where To Meet
     `;
 
-      await sendMail(inviteeEmail, subject, text);
+      // await sendMail(inviteeEmail, subject, text);
       res.status(200).json({ message: "Invite Sent" });
     } catch (error) {
       console.error("Error sending invite:", error);
