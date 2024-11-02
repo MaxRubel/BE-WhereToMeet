@@ -315,7 +315,7 @@ eventsRouter.post(
       Where To Meet
     `;
 
-      await sendMail(inviteeEmail, subject, text);
+      // await sendMail(inviteeEmail, subject, text);
       res.status(200).json({ message: "Invite Sent" });
     } catch (error) {
       console.error("Error sending invite:", error);
