@@ -155,6 +155,7 @@ groupsRouter.delete("/:id", async (req: Request, res: Response) => {
 });
 
 //@ts-ignore
+// TO DO:send an email when someone is added to the group
 // ADD Member
 groupsRouter.post("/add-member", async (req: Request, res: Response) => {
   try {
