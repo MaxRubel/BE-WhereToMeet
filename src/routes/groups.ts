@@ -69,14 +69,14 @@ groupsRouter.get("/", async (req: any, res: any) => {
 //  GET Single Group
 groupsRouter.get("/:id", async (req: any, res: any) => {
   const id = req.params.id;
+
   try {
     const group = await db
       .collection("groups")
       .findOne({ _id: new ObjectId(id) });
     if (group) {
       //@ts-ignore
-      const objectIds = group.members.map((member) => new ObjectId(member._id));
-
+      const objectIds = group.members.map((member) => (new ObjectId(member._id)));
       const query = { _id: { $in: objectIds } };
       const members = await db.collection("users").find(query).toArray();
       const result = { ...group, members };
@@ -159,6 +159,7 @@ groupsRouter.delete("/:id", async (req: Request, res: Response) => {
 groupsRouter.post("/add-member", async (req: Request, res: Response) => {
   try {
     const { groupId, memberId } = req.body;
+    console.log(req.body)
 
     if (!groupId || !memberId) {
       return res

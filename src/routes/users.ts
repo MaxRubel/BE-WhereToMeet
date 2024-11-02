@@ -4,6 +4,7 @@ import { db } from "../index";
 import { ObjectId } from "mongodb";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+import { sampleUsers } from "../../sample_data/users";
 dotenv.config();
 
 const userRouter = express.Router();
@@ -138,5 +139,21 @@ userRouter.post("/get-chat-users", async (req: Request, res: Response) => {
     res.status(500).json({ message: err.message });
   }
 });
+
+userRouter.post("/insert-many-users", async (req: Request, res: Response) => {
+  try {
+    //@ts-ignore
+    await db.collection("users").insertMany(sampleUsers, {
+      ordered: true
+    });
+    res.status(200).json({ message: "inserted many users into the db." });
+    console.log("POST: added many users to the db")
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
 
 export default userRouter;
