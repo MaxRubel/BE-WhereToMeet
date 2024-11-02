@@ -1,6 +1,21 @@
 import express, { Request, Response } from "express";
 import { db } from "../index";
 import { ObjectId } from "mongodb";
+import nodemailer from "nodemailer"
+import dotenv from "dotenv"
+
+dotenv.config();
+
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 587, 
+  secure: false, 
+  service: process.env.EMAIL_SERVICE,
+  auth: {
+    user: process.env.EMAIL_USER, 
+    pass: process.env.EMAIL_PASS, 
+  },
+});
 
 const groupsRouter = express.Router();
 
@@ -179,6 +194,33 @@ groupsRouter.post("/add-member", async (req: Request, res: Response) => {
 
     //@ts-ignore
     const result = await db.collection("groups").updateOne(filter, updateDoc);
+    //get the group name
+    const group : string |any = await db.collection("groups").findOne({_id: new ObjectId(groupId)})// convert the string tgo a Obj again
+    const groupName = group.name
+
+    // get the user email
+    const user = await db.collection("users").findOne({_id:new ObjectId(memberId)}) //convert the string to Object Id
+    if (user) {
+      const userEmail: string = user.email
+      console.log("this is the user email", userEmail);
+
+      // Send email
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: userEmail,
+        subject: `You have been added to the group ${groupName}!`,
+        text: `Hi ${user.name},\n\nYou have been successfully added to the group "${groupName}". We're thrilled to have you as a part of the team!\n\nBest Regards,\nThe Team`,
+        html: `<h1>Welcome to the Group!</h1>
+               <p>Hi ${user.name},</p>
+               <p>You have been successfully added to the group "<strong>${groupName}</strong>". We're thrilled to have you as a part of our group!</p>
+               <p>Best Regards,<br>The Team</p>`,
+      };
+      
+
+      await transporter.sendMail(mailOptions);
+    } else {
+      console.log("User not found");
+    }
 
     if (result.matchedCount === 0) {
       return res.status(404).json({ message: "Group not found" });
