@@ -1,6 +1,5 @@
 export const sampleUsers = [
   {
-    "_id": "5f8a7b2b9d3f2c1a3c5e7g01",
     "uid": "google_100001",
     "name": "Alice Johnson",
     "avatarUrl": "https://example.com/avatar1.jpg",
@@ -20,7 +19,6 @@ export const sampleUsers = [
     "friends": ["5f8a7b2b9d3f2c1a3c5e7g02", "5f8a7b2b9d3f2c1a3c5e7g03"]
   },
   {
-    "_id": "5f8a7b2b9d3f2c1a3c5e7g02",
     "uid": "google_100002",
     "name": "Bob Smith",
     "avatarUrl": "https://example.com/avatar2.jpg",
@@ -40,7 +38,6 @@ export const sampleUsers = [
     "friends": ["5f8a7b2b9d3f2c1a3c5e7g01", "5f8a7b2b9d3f2c1a3c5e7g03"]
   },
   {
-    "_id": "5f8a7b2b9d3f2c1a3c5e7g03",
     "uid": "google_100003",
     "name": "Charlie Davis",
     "avatarUrl": "https://example.com/avatar3.jpg",
@@ -60,7 +57,6 @@ export const sampleUsers = [
     "friends": ["5f8a7b2b9d3f2c1a3c5e7g01", "5f8a7b2b9d3f2c1a3c5e7g02", "5f8a7b2b9d3f2c1a3c5e7g04"]
   },
   {
-    "_id": "5f8a7b2b9d3f2c1a3c5e7g04",
     "uid": "google_100004",
     "name": "Diana Brown",
     "avatarUrl": "https://example.com/avatar4.jpg",
@@ -80,7 +76,6 @@ export const sampleUsers = [
     "friends": ["5f8a7b2b9d3f2c1a3c5e7g03", "5f8a7b2b9d3f2c1a3c5e7g05"]
   },
   {
-    "_id": "5f8a7b2b9d3f2c1a3c5e7g05",
     "uid": "google_100005",
     "name": "Ethan Green",
     "avatarUrl": "https://example.com/avatar5.jpg",
@@ -100,7 +95,6 @@ export const sampleUsers = [
     "friends": ["5f8a7b2b9d3f2c1a3c5e7g04", "5f8a7b2b9d3f2c1a3c5e7g06"]
   },
   {
-    "_id": "5f8a7b2b9d3f2c1a3c5e7g06",
     "uid": "google_100006",
     "name": "Fiona White",
     "avatarUrl": "https://example.com/avatar6.jpg",
@@ -120,7 +114,6 @@ export const sampleUsers = [
     "friends": ["5f8a7b2b9d3f2c1a3c5e7g05", "5f8a7b2b9d3f2c1a3c5e7g07"]
   },
   {
-    "_id": "5f8a7b2b9d3f2c1a3c5e7g07",
     "uid": "google_100007",
     "name": "George Taylor",
     "avatarUrl": "https://example.com/avatar7.jpg",
@@ -140,7 +133,6 @@ export const sampleUsers = [
     "friends": ["5f8a7b2b9d3f2c1a3c5e7g06", "5f8a7b2b9d3f2c1a3c5e7g08"]
   },
   {
-    "_id": "5f8a7b2b9d3f2c1a3c5e7g08",
     "uid": "google_100008",
     "name": "Hannah Lee",
     "avatarUrl": "https://example.com/avatar8.jpg",
@@ -160,7 +152,6 @@ export const sampleUsers = [
     "friends": ["5f8a7b2b9d3f2c1a3c5e7g07", "5f8a7b2b9d3f2c1a3c5e7g09"]
   },
   {
-    "_id": "5f8a7b2b9d3f2c1a3c5e7g09",
     "uid": "google_100009",
     "name": "Ian Clark",
     "avatarUrl": "https://example.com/avatar9.jpg",
@@ -180,7 +171,6 @@ export const sampleUsers = [
     "friends": ["5f8a7b2b9d3f2c1a3c5e7g08", "5f8a7b2b9d3f2c1a3c5e7g10"]
   },
   {
-    "_id": "5f8a7b2b9d3f2c1a3c5e7g10",
     "uid": "google_100010",
     "name": "Julia Scott",
     "avatarUrl": "https://example.com/avatar10.jpg",
@@ -200,13 +190,3 @@ export const sampleUsers = [
     "friends": ["5f8a7b2b9d3f2c1a3c5e7g09", "5f8a7b2b9d3f2c1a3c5e7g01"]
   }
 ]
-
-// const formattedUsers = users.map(user => {
-//   const formattedUser = { ...user };
-//   formattedUser._id = new ObjectId(user._id);
-//   formattedUser.friends = user.friends.map(friendId => new ObjectId(friendId));
-//   return formattedUser;
-// });
-
-// // Insert the formatted users
-// const result = await collection.insertMany(formattedUsers);
