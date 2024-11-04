@@ -16,13 +16,17 @@ export type User = {
   };
   friends: string[];
 };
-
+type Member ={
+  email: string | null;
+  _id : string | null;
+  joined: string | null;  
+}
 export type Group = {
   _id: string; //primary key
   ownerId: string; //foreign key
   name: string;
   description: string;
-  members: string[]; //array of userIds
+  members: Member[]; //array of userIds
 };
 
 export type Event = {
@@ -34,6 +38,7 @@ export type Event = {
   description: string;
   location: Location;
   time: string; // datetime string
+  invites : [] | null;
 
   suggestions: Location[];
   messages: Message[];
