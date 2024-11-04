@@ -182,6 +182,9 @@ groupsRouter.post("/add-member", async (req: Request, res: Response) => {
         .status(400)
         .json({ message: "groupId and memberId are required" });
     }
+    const memberEmail: any | null= await db.collection('users').findOne({_id: new ObjectId(memberId)},{projection: {email: 1}})
+    const email: string | null = memberEmail.email
+    console.log('the member email is :',email)
 
     const filter = { _id: new ObjectId(groupId) };
     const updateDoc = {
@@ -189,6 +192,7 @@ groupsRouter.post("/add-member", async (req: Request, res: Response) => {
         members: {
           _id: memberId,
           joined: new Date(),
+          email : email,
         },
       },
     };

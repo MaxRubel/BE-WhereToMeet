@@ -5,6 +5,7 @@ import { ObjectId } from "mongodb";
 // import { verifyFirebaseToken } from "../auth/firebaseAuth";
 import { DecodedIdToken } from "firebase-admin/lib/auth/token-verifier";
 import { sendMail } from "../../components/Email";
+import { Event,Group } from "../../dataTypes";
 
 function isValidEmail(email: string): boolean {
   // RFC 5322 compliant email regex
@@ -16,12 +17,51 @@ function isValidEmail(email: string): boolean {
 const eventsRouter = express.Router();
 
 //Create a new events to the DB
-eventsRouter.post("/", async (req: Request, res: Response) => {
+eventsRouter.post ("/", async (req: Request, res: Response) => {
   try {
     delete req.body._id;
-    const result = await db.collection("events").insertOne(req.body);
+    const result:any | string | number = await db.collection("events").insertOne(req.body);
     res.status(200).json({ _id: result.insertedId, ...req.body });
     console.log("POST: Create event");
+    // send a email if the event is private and has a group selected
+    const eventGroup = await db.collection("events").findOne({_id : new ObjectId(result.insertedId)}) as Event | null;
+    if(eventGroup && eventGroup.groupId){
+      const group = await db.collection("groups").findOne({_id : new ObjectId(eventGroup.groupId)}) as Group | null;
+      if (group && group.members){
+
+        console.log("this are member", group.members);
+        group.members.map((member)=> {
+          const subject = "You're invited to an event!";
+        const text = `
+        Hello!
+
+        You've been invited to an event by ${group.name}.
+        
+
+        Regards,
+        Where To Meet
+      `;
+            if (member.email) {
+              sendMail(member.email, subject, text);
+              console.log("this are the member email", member.email);
+            } else {
+              console.log("Member email is null");
+            }
+          })
+        }else{
+          console.log('group no found')
+        }
+
+        
+      } else{
+        console.log("eventgroup and event.groupId is missing")
+      }
+    if(eventGroup && eventGroup.invites){
+      console.log("this is my invite user", eventGroup.invites)
+    } else{
+      console.log("it did not find anything")
+    }
+
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ message: err.message });
