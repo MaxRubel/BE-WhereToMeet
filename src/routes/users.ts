@@ -144,16 +144,34 @@ userRouter.post("/insert-many-users", async (req: Request, res: Response) => {
   try {
     //@ts-ignore
     await db.collection("users").insertMany(sampleUsers, {
-      ordered: true
+      ordered: true,
     });
     res.status(200).json({ message: "inserted many users into the db." });
-    console.log("POST: added many users to the db")
+    console.log("POST: added many users to the db");
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ message: err.message });
   }
 });
 
+userRouter.post(
+  "/change-email-privacy",
+  async (req: Request, res: Response) => {
+    const { userId, value } = req.body;
 
+    try {
+      await db
+        .collection("users")
+        .updateOne(
+          { _id: new ObjectId(userId) },
+          { $set: { noEmails: value } }
+        );
+      console.log("POST: Changing email privacy setting for user: ", userId);
+    } catch (err: any) {
+      console.error(err);
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
 
 export default userRouter;

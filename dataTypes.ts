@@ -15,12 +15,13 @@ export type User = {
     };
   };
   friends: string[];
+  noEmails: boolean;
 };
-type Member ={
+type Member = {
   email: string | null;
-  _id : string | null;
-  joined: string | null;  
-}
+  _id: string | null;
+  joined: string | null;
+};
 export type Group = {
   _id: string; //primary key
   ownerId: string; //foreign key
@@ -34,11 +35,11 @@ export type Event = {
   title: string;
   ownerId: string; //foreign key
   groupId: string; //foreign key
-
+  private: boolean;
   description: string;
   location: Location;
   time: string; // datetime string
-  invites : [] | null;
+  invites: [] | null;
 
   suggestions: Location[];
   messages: Message[];

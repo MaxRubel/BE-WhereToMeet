@@ -1,19 +1,19 @@
 import express, { Request, Response } from "express";
 import { db } from "../index";
 import { ObjectId } from "mongodb";
-import nodemailer from "nodemailer"
-import dotenv from "dotenv"
+import nodemailer from "nodemailer";
+import dotenv from "dotenv";
 
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 587, 
-  secure: false, 
+  port: 587,
+  secure: false,
   service: process.env.EMAIL_SERVICE,
   auth: {
-    user: process.env.EMAIL_USER, 
-    pass: process.env.EMAIL_PASS, 
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
@@ -80,7 +80,6 @@ groupsRouter.get("/", async (req: any, res: any) => {
   }
 });
 
-
 //  GET Single Group
 groupsRouter.get("/:id", async (req: any, res: any) => {
   const id = req.params.id;
@@ -91,7 +90,7 @@ groupsRouter.get("/:id", async (req: any, res: any) => {
       .findOne({ _id: new ObjectId(id) });
     if (group) {
       //@ts-ignore
-      const objectIds = group.members.map((member) => (new ObjectId(member._id)));
+      const objectIds = group.members.map((member) => new ObjectId(member._id));
       const query = { _id: { $in: objectIds } };
       const members = await db.collection("users").find(query).toArray();
       const result = { ...group, members };
@@ -170,21 +169,22 @@ groupsRouter.delete("/:id", async (req: Request, res: Response) => {
 });
 
 //@ts-ignore
-// TO DO:send an email when someone is added to the group
 // ADD Member
 groupsRouter.post("/add-member", async (req: Request, res: Response) => {
   try {
     const { groupId, memberId } = req.body;
-    console.log(req.body)
+    console.log(req.body);
 
     if (!groupId || !memberId) {
       return res
         .status(400)
         .json({ message: "groupId and memberId are required" });
     }
-    const memberEmail: any | null= await db.collection('users').findOne({_id: new ObjectId(memberId)},{projection: {email: 1}})
-    const email: string | null = memberEmail.email
-    console.log('the member email is :',email)
+    const memberEmail: any | null = await db
+      .collection("users")
+      .findOne({ _id: new ObjectId(memberId) }, { projection: { email: 1 } });
+    const email: string | null = memberEmail.email;
+    console.log("the member email is :", email);
 
     const filter = { _id: new ObjectId(groupId) };
     const updateDoc = {
@@ -192,7 +192,6 @@ groupsRouter.post("/add-member", async (req: Request, res: Response) => {
         members: {
           _id: memberId,
           joined: new Date(),
-          email : email,
         },
       },
     };
@@ -200,31 +199,31 @@ groupsRouter.post("/add-member", async (req: Request, res: Response) => {
     //@ts-ignore
     const result = await db.collection("groups").updateOne(filter, updateDoc);
     //get the group name
-    const group : string |any = await db.collection("groups").findOne({_id: new ObjectId(groupId)})// convert the string tgo a Obj again
-    const groupName = group.name
+    const group: string | any = await db
+      .collection("groups")
+      .findOne({ _id: new ObjectId(groupId) }); // convert the string tgo a Obj again
+    const groupName = group.name;
 
     // get the user email
-    const user = await db.collection("users").findOne({_id:new ObjectId(memberId)}) //convert the string to Object Id
-    if (user) {
-      const userEmail: string = user.email
-      console.log("this is the user email", userEmail);
+    const user = await db
+      .collection("users")
+      .findOne({ _id: new ObjectId(memberId) }); //convert the string to Object Id
+    if (user && !user.noEmails) {
+      const userEmail: string = user.email;
 
       // Send email
       const mailOptions = {
         from: process.env.EMAIL_USER,
         to: userEmail,
         subject: `You have been added to the group ${groupName}!`,
-        text: `Hi ${user.name},\n\nYou have been successfully added to the group "${groupName}". We're thrilled to have you as a part of the team!\n\nBest Regards,\nThe Team`,
+        text: `Hi ${user.name},\n\nYou have been successfully added to the group "${groupName}". We're thrilled to have you as a part of our group!\n\nBest Regards,\nThe Team`,
         html: `<h1>Welcome to the Group!</h1>
                <p>Hi ${user.name},</p>
                <p>You have been successfully added to the group "<strong>${groupName}</strong>". We're thrilled to have you as a part of our group!</p>
                <p>Best Regards,<br>The Team</p>`,
       };
-      
 
       await transporter.sendMail(mailOptions);
-    } else {
-      console.log("User not found");
     }
 
     if (result.matchedCount === 0) {
@@ -287,9 +286,9 @@ groupsRouter.post("/remove-member", async (req: Request, res: Response) => {
 groupsRouter.get("/events-of/:groupId", async (req: any, res: any) => {
   const groupId = req.params.groupId;
   try {
-    const events = await db.collection("events").find({ groupId }).toArray()
-    res.status(200).json(events)
-    console.log("GET: getting events of group", groupId)
+    const events = await db.collection("events").find({ groupId }).toArray();
+    res.status(200).json(events);
+    console.log("GET: getting events of group", groupId);
   } catch (err: any) {
     console.error("error getting group's events ", groupId, err);
     res.status(500).json({ message: err.message });
