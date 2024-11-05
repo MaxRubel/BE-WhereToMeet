@@ -2,10 +2,8 @@ import express from "express";
 import { db } from "../index";
 import { Request, Response } from "express";
 import { ObjectId } from "mongodb";
-// import { verifyFirebaseToken } from "../auth/firebaseAuth";
-import { DecodedIdToken } from "firebase-admin/lib/auth/token-verifier";
 import { sendMail } from "../../components/Email";
-import { Event, Group, User } from "../../dataTypes";
+import { Group } from "../../dataTypes";
 
 function isValidEmail(email: string): boolean {
   // RFC 5322 compliant email regex
@@ -38,6 +36,7 @@ eventsRouter.post("/", async (req: Request, res: Response) => {
     }
 
     const memberIds = group.members.map((member) => {
+      if (!member._id) return;
       if (typeof member._id === "string") {
         return new ObjectId(member._id);
       }
@@ -52,9 +51,8 @@ eventsRouter.post("/", async (req: Request, res: Response) => {
 
     const ownerId = new ObjectId(req.body.ownerId);
 
-    members.map((member) => {
-      const subject = "You're invited to an event!";
-      const text = `
+    const subject = "You're invited to an event!";
+    const text = `
         Hello!
 
         You've been invited to an event by ${group.name}.
@@ -64,6 +62,7 @@ eventsRouter.post("/", async (req: Request, res: Response) => {
         Where To Meet
       `;
 
+    members.map((member) => {
       if (member.email && !member.noEmails && member._id !== ownerId) {
         sendMail(member.email, subject, text);
         console.log("Sending private group invite to:", member.email);
@@ -72,9 +71,6 @@ eventsRouter.post("/", async (req: Request, res: Response) => {
     console.log("POST: Created event", result.insertedId);
     res.status(200).json({ _id: result.insertedId, ...req.body });
   } catch (err: any) {
-    // if (eventGroup && eventGroup.invites) {
-    //   console.log("this is my invite user", eventGroup.invites);
-    // }
     console.error(err);
     res.status(500).json({ message: err.message });
   }
