@@ -4,7 +4,6 @@ import { db } from "../index";
 import { ObjectId } from "mongodb";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
-import { sampleUsers } from "../../sample_data/users";
 dotenv.config();
 
 const userRouter = express.Router();
