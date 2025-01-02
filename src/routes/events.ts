@@ -2,8 +2,8 @@ import express from "express";
 import { db } from "../index";
 import { Request, Response } from "express";
 import { ObjectId } from "mongodb";
-import { sendMail } from "../../components/Email";
-import { Group } from "../../dataTypes";
+import { sendMail } from "../Email";
+import { Group } from "../dataTypes";
 
 function isValidEmail(email: string): boolean {
   // RFC 5322 compliant email regex
